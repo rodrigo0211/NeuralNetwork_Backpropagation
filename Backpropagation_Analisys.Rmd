@@ -1,0 +1,111 @@
+---
+title: "Exercise 1.1"
+author: "Rodrigo Santos Alvarez"
+date: "2023-11-05"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+```
+# Loss Reduction over epoch
+
+```{r}
+f <- function(q) {
+  if (q > 0) {
+    return(1)
+  } else {
+    return(0)
+  }
+}
+
+x <- 4
+y <- 0
+
+epoch <- 20
+loss <-list( c(numeric(epoch)) )
+a <- 1
+main_w_list <- vector("list", 4)
+w <- vector("list", epoch)
+
+for (j in c(0.5,1,1.5,2)) {
+  eta <- j # learning rate
+  q<- c(1,1,-1,0.5,1,2)
+  
+  # BACKPROPAGATION
+  for (i in 1:epoch) {
+    z <- round(c(q[1]*x, q[2]*x, q[3]*x), 3)
+    f_z <- round(c(max(0, z[1]), max(0, z[2]), max(0, z[3])), 3)
+    z0 <- round(f_z[1]*q[4] + f_z[2]*q[5] + f_z[3]*q[6], 3)
+    sigma_z0 <- round(1 / (1 + exp(-z0)), 3)
+    k <- round(-2*(y - sigma_z0) * sigma_z0 * (1 - sigma_z0) * x, 3)
+    grad_e <- round(k * c(q[4], q[5], 0, 
+                          f(z[1])*q[4], f(z[2])*q[5], f(z[3])*q[6]), 3)
+    loss[[a]][i] <- (y-sigma_z0)^2 
+    w_new <- round(q - eta * grad_e,3)
+    q <- w_new
+    w[[i]] <- w_new
+  }
+  if (j < 2  ) {loss <- append(loss, list(c(numeric(epoch))))}
+  main_w_list[[a]] <- w
+
+  a <- a +1
+  
+}
+```
+
+# Weights optimization
+# Plot the loss values 
+```{r}
+
+colors <- c("red", "blue", "green", "purple")
+legend_labels <- c("learning rate = 0.5", "learning rate = 1", 
+                   "learning rate = 1.5", "learning rate = 2")
+plot(loss[[1]], type = "o", col = colors[1], xlab = "Epoch", ylab = "Loss", 
+     ylim = range(unlist(loss)),main="loss decrease over epoch")
+for (i in 2:length(loss)) {
+  lines(loss[[i]], type = "o", col = colors[i])
+}
+legend("topright", legend = legend_labels, col = colors, lty = 1, pch = 1)
+
+# Plot change of weights values over epoch
+plot_weight <- function(weight_index) {
+  data_to_plot <- data.frame(
+    epoch = rep(1:epoch, 4),
+    value = unlist(lapply(main_w_list, function(w) sapply(w, `[[`, weight_index))),
+    learning_rate = rep(c(0.5, 1, 1.5, 2), each = epoch)
+  )
+  
+  ggplot(data_to_plot, aes(x = epoch, y = value, color = as.factor(learning_rate))) +
+    geom_point() +
+    geom_line() + # Omit this line if you don't want lines connecting the points.
+    labs(
+      title = paste("Change in weight", weight_index, "over epochs"),
+      x = "Epoch",
+      y = paste("Weight", weight_index, "Value"),
+      color = "Learning Rate"
+    ) +
+    scale_color_manual(
+      values = c("red", "green", "blue", "purple"),
+      labels = paste("Learning Rate", c(0.5, 1, 1.5, 2))
+    ) +
+    theme_minimal()
+}
+
+# To save the plots in a list
+plot_list <- list()
+
+# Generate and plot data for each weight
+for (i in 1:6) {
+  plot_list[[i]] <- plot_weight(i)
+}
+
+print(plot_list[[1]]) 
+print(plot_list[[2]]) 
+print(plot_list[[3]]) 
+print(plot_list[[4]]) 
+print(plot_list[[5]]) 
+print(plot_list[[6]]) 
+
+```
