@@ -108,4 +108,50 @@ print(plot_list[[4]])
 print(plot_list[[5]]) 
 print(plot_list[[6]]) 
 
+
 ```
+
+# Parameters
+x <- 4
+y <- 0
+epoch <- 20
+learning_rates <- seq(0.001, 10, length.out = 10000)
+final_losses <- numeric(length(learning_rates))
+
+f <- function(q) {
+  if (q > 0) {
+    return(1)
+  } else {
+    return(0)
+  }
+}
+
+# Loop over each learning rate
+for (lr_idx in 1:length(learning_rates)) {
+  eta <- learning_rates[lr_idx]
+  q <- c(1, 1, -1, 0.5, 1, 2)  # Initial weights
+
+  # Training loop for the current learning rate
+  for (i in 1:epoch) {
+    z  <- round(c(q[1] * x, q[2] * x, q[3] * x), 3)
+    f_z <- round(c(max(0, z[1]), max(0, z[2]), max(0, z[3])), 3)
+    z0 <- round(f_z[1] * q[4] + f_z[2] * q[5] + f_z[3] * q[6], 3)
+    sigma_z0 <- round(1 / (1 + exp(-z0)), 3)
+    k <- round(-2 * (y - sigma_z0) * sigma_z0 * (1 - sigma_z0) * x, 3)
+
+    grad_e <- round(
+      k * c(
+        q[4], q[5], 0,
+        f(z[1]) * q[4], f(z[2]) * q[5], f(z[3]) * q[6]
+      ),
+      3
+    )
+
+    loss <- (y - sigma_z0)^2
+    w_new <- round(q - eta * grad_e, 3)
+    q <- w_new
+  }
+
+  # Store the final loss for this learning rate
+  final_losses[lr_idx] <- loss
+}
